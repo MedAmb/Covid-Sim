@@ -2,6 +2,7 @@
 #include <math.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <cstring>
 
 #include "simulator.h"
 #include "person.h"
@@ -9,7 +10,7 @@
 #include "ui.h"
 
 
-bool saturated = false;
+bool isSaturated = false;
 
 bool tryEvent(double probability)
 {
@@ -40,15 +41,15 @@ int simMain()
     {
         if((i % 2) == 0)
         {
-            uiRedraw(people, NUM_PEOPLE, inefectionHistory, SIM_HOURS);
+            redrawUI(people, NUM_PEOPLE, inefectionHistory, SIM_HOURS);
         }
 
         for(int j = 0; j < NUM_PEOPLE; j++)
         {
             if(people[j].isAlive())
             {
-                people[j].mobilityModel->move();
-                people[j].progressDiesease();
+                people[j].howToMove->move();
+                people[j].progressDisease();
             }
         }
 
@@ -82,8 +83,30 @@ int simMain()
             else if(people[j].status == VULNERABLE)
                 numOfVUlnerable++;
 
+        } 
 
-        }        
+        if(numOfInfected > maxInfectedAtOnce)
+            maxInfectedAtOnce = numOfInfected;
 
+        isSaturated = (numOfInfected > SATURATED_THRESHOLD);
+
+        if((i % 10) == 0 || numOfInfected == 0)
+        {
+            printf("%d\t%d\t%d\t%d\t(%lf%%)\n", numOfInfected, numOfVUlnerable, numOfImmune, numOfDead, (numOfDead * 100)/NUM_PEOPLE);
+        }
+
+        inefectionHistory[i] = numOfInfected;
+
+        if(numOfInfected == 0)
+            break;
     }
+
+    printf(" Peak Infection - %d\n", maxInfectedAtOnce);
+
+    return 0;
+}
+
+int main()
+{
+    return simMain();
 }
